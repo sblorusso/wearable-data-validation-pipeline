@@ -24,14 +24,29 @@ source(here::here("R", "00_config.R"))
 beats_matched <- read_csv(
   here::here("data", "processed", "beats_matched.csv"), show_col_types = FALSE
 )
+if (nrow(beats_matched) == 0L) {
+  stop(
+    "data/processed/beats_matched.csv has 0 rows - step 02 didn't match any ",
+    "wearable beats to a phase window. Re-run R/02_diagnose_and_fix_timezone_bug.R ",
+    "and check its 'AFTER FIX' summary before continuing."
+  )
+}
+## Read timestamp_local as plain character (see the note in step 02) so that
+## readr's datetime auto-guessing can't pre-empt the explicit tz = CONFIG$
+## timezone parse below.
 reference_files <- list.files(here::here("data", "raw", "reference"), full.names = TRUE)
-reference_raw <- map_dfr(reference_files, read_csv, show_col_types = FALSE) %>%
-  mutate(timestamp_local_parsed = as.POSIXct(timestamp_local, tz = CONFIG$timezone))
+reference_raw <- map_dfr(
+  reference_files, read_csv, col_types = cols(.default = col_character())
+) %>%
+  mutate(
+    ibi_ms = as.numeric(ibi_ms),
+    timestamp_local_parsed = as.POSIXct(timestamp_local, tz = CONFIG$timezone)
+  )
 
 #' Nearest-neighbour match of wearable beats to reference beats within one
 #' subject, using findInterval on the (already sorted) reference timestamps -
 #' O(n log n) rather than an O(n*m) pairwise comparison.
-match_nearest <- function(wearable_ts, reference_ts, max_gap_s = 0.3) {
+match_nearest <- function(wearable_ts, reference_ts) {
   w <- as.numeric(wearable_ts)
   r <- as.numeric(reference_ts)
   idx <- pmin(pmax(findInterval(w, r), 1L), length(r))
@@ -57,7 +72,7 @@ per_beat_errors <- beats_matched %>%
         reference_ibi_ms = ref_sub$ibi_ms[matched$reference_idx],
         match_gap_s = matched$gap_s
       ) %>%
-      filter(match_gap_s <= 0.3) %>%
+      filter(match_gap_s <= CONFIG$matching_max_gap_s) %>%
       mutate(
         signed_error_ms = ibi_ms - reference_ibi_ms,
         abs_error_ms = abs(signed_error_ms)

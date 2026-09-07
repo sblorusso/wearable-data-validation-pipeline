@@ -43,10 +43,16 @@ CONFIG <- list(
   ## under-reads IBI slightly, i.e. over-reads heart rate) plus noise, and a
   ## small dropout rate (missed beats -> gaps that a real pipeline would
   ## either exclude ["observed_only"] or bridge ["including_interpolated"]).
-  wearable_bias_ms = -18,
-  wearable_noise_sd_ms = 35,
+  wearable_bias_ms = -6,
+  wearable_noise_sd_ms = 25,
   wearable_dropout_rate = 0.05,
   reference_noise_sd_ms = 6,
+  ## Max allowed time gap (seconds) between a wearable beat and its matched
+  ## reference beat in step 03. Because the generator builds each series by
+  ## cumulatively summing per-beat IBI, a constant per-beat bias compounds
+  ## into a growing but bounded timestamp offset over a phase
+  matching_max_gap_s = 6,
+  
   ## Grid of candidate thresholds evaluated in the resampling calibration.
   min_matched_beats_grid = c(10, 15, 20, 25, 30, 40, 50, 75, 100, 150, 200),
   resampling = list(

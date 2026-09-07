@@ -30,14 +30,23 @@ library(lubridate)
 
 source(here::here("R", "00_config.R"))
 
-schedule <- read_csv(here::here("data", "raw", "schedule.csv"), show_col_types = FALSE) %>%
+## IMPORTANT: scheduled_*_local and timestamp_local must be read as plain
+## CHARACTER columns, not auto-detected as datetimes. readr::read_csv()'s
+## column-type guesser recognises the "YYYY-MM-DD HH:MM:SS[.sss]" pattern
+## used here and will silently pre-parse it as a datetime itself (also
+## defaulting to UTC for a timezone-naive string) if col_types isn't pinned
+
+naive_char_cols <- cols(.default = col_character())
+
+schedule <- read_csv(here::here("data", "raw", "schedule.csv"), col_types = naive_char_cols) %>%
   mutate(
     scheduled_start = as.POSIXct(scheduled_start_local, tz = CONFIG$timezone),
     scheduled_end = as.POSIXct(scheduled_end_local, tz = CONFIG$timezone)
   )
 
 wearable_files <- list.files(here::here("data", "raw", "wearable"), full.names = TRUE)
-wearable_raw <- map_dfr(wearable_files, read_csv, show_col_types = FALSE)
+wearable_raw <- map_dfr(wearable_files, read_csv, col_types = naive_char_cols) %>%
+  mutate(ibi_ms = as.numeric(ibi_ms))
 
 ## --- 2a. Reproduce the bug: naive parse defaults to UTC ---------------------
 ## This mirrors readr::read_csv()'s default behaviour for a timezone-naive

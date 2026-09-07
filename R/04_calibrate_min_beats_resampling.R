@@ -55,20 +55,23 @@ resample_one_phase <- function(phase_errors, phase_name) {
   grid <- CONFIG$min_matched_beats_grid[CONFIG$min_matched_beats_grid <= pool_size / 2]
 
   map_dfr(grid, function(n_sub) {
-    reps <- map_dfr(seq_len(n_reps), function(r) {
-      idx <- sample.int(pool_size, n_sub, replace = FALSE)
-      tibble(
-        bias_ms = mean(pool_signed[idx]),
-        sd_ms = sd(pool_signed[idx]),
-        pct_within = 100 * mean(pool_abs[idx] <= tol)
-      )
-    })
+    ## Vectorised: draw all n_reps replicate samples at once as an
+    ## (n_sub x n_reps) index matrix, then summarise with colMeans/apply
+    ## instead of building + row-binding a tibble per replicate.
+    idx <- replicate(n_reps, sample.int(pool_size, n_sub, replace = FALSE))
+    signed_mat <- matrix(pool_signed[idx], nrow = n_sub)
+    abs_mat <- matrix(pool_abs[idx], nrow = n_sub)
+    
+    rep_bias <- colMeans(signed_mat)
+    rep_sd <- apply(signed_mat, 2, sd)
+    rep_pct_within <- colMeans(abs_mat <= tol) * 100
+    
     tibble(
       phase_name = phase_name,
       n_sub = n_sub,
-      empirical_se_bias_ms = round(sd(reps$bias_ms), 2),
-      empirical_se_sd_ms = round(sd(reps$sd_ms), 2),
-      empirical_se_pct_pp = round(sd(reps$pct_within), 2)
+      empirical_se_bias_ms = round(sd(rep_bias), 2),
+      empirical_se_sd_ms = round(sd(rep_sd), 2),
+      empirical_se_pct_pp = round(sd(rep_pct_within), 2)
     )
   })
 }
