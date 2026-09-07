@@ -1,0 +1,14 @@
+# Synthetic data, regenerated fresh by R/01_generate_synthetic_data.R
+data/
+
+# Analysis tables, regenerated fresh by run_all.R
+output/tables/
+
+# Keep output/plots/ tracked (small PNGs) so the README can show results
+# without requiring a reviewer to run R first.
+
+.Rproj.user/
+.Rhistory
+.RData
+.Ruserdata
+.DS_Store
