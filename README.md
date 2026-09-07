@@ -117,7 +117,7 @@ fresh by step 1 — safe to delete and rerun).
 
 ## Requirements
 
-R (developed against R 4.x) with the packages: `here`, `dplyr`, `purrr`,
+R (developed against R 4.5.2) with the packages: `here`, `dplyr`, `purrr`,
 `readr`, `tidyr`, `lubridate`, `ggplot2`.
 
 Package versions are pinned with [renv](https://rstudio.github.io/renv/) for
@@ -143,8 +143,4 @@ already embedded so results are visible at a glance. A short `LICENSE` file
 
 ## What's deliberately left out
 
-This demo focuses on the two decisions above rather than reproducing the
-full original pipeline (which additionally covered cross-correlation-based
-sensor sync-quality diagnostics, movement as a moderator of accuracy, and a
-sensitivity comparison between including vs. excluding interpolated beats).
-Happy to walk through any of those in more depth on request.
+This demo focuses on these two cases rather than reproducing the full research pipeline, which additionally included cross-correlation-based synchronization diagnostics, movement-related analyses of measurement accuracy, and sensitivity analyses comparing alternative preprocessing decisions.
