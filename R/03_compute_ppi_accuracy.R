@@ -1,18 +1,19 @@
 ## =============================================================================
-## Step 3: IBI accuracy - Bland-Altman bias/limits of agreement, by phase
+## Step 3: PPI accuracy - Bland-Altman bias/limits of agreement, by phase
 ## =============================================================================
 #' Matches each correctly-timezone-parsed wearable beat (from step 02) to its
-#' nearest reference beat, then summarises per-beat error per task phase
-#' using Bland-Altman bias + 95% limits of agreement (LoA) as the primary
-#' metric, plus MAE and percent-within-tolerance as secondary/descriptive
-#' measures. Event-phase is used as the analysis unit (not fixed time
-#' windows) because it is what the downstream research question ("how
-#' accurate is the wearable during X task") actually needs.
+#' nearest reference beat, then summarises per-beat pulse-to-pulse-interval
+#' (PPI) error per task phase using Bland-Altman bias + 95% limits of
+#' agreement (LoA) as the primary metric, plus MAE and percent-within-
+#' tolerance as secondary/descriptive measures. Event-phase is used as the
+#' analysis unit (not fixed time windows) because it is what the downstream
+#' research question ("how accurate is the wearable during X task") actually
+#' needs.
 #'
 #' Output:
-#'   output/tables/ibi_accuracy_by_phase.csv
-#'   output/tables/ibi_accuracy_overall.csv
-#'   output/tables/ibi_per_beat_errors.csv (feeds step 04's resampling calibration)
+#'   output/tables/ppi_accuracy_by_phase.csv
+#'   output/tables/ppi_accuracy_overall.csv
+#'   output/tables/ppi_per_beat_errors.csv (feeds step 04's resampling calibration)
 
 library(here)
 library(dplyr)
@@ -39,13 +40,20 @@ reference_raw <- map_dfr(
   reference_files, read_csv, col_types = cols(.default = col_character())
 ) %>%
   mutate(
-    ibi_ms = as.numeric(ibi_ms),
+    ppi_ms = as.numeric(ppi_ms),
     timestamp_local_parsed = as.POSIXct(timestamp_local, tz = CONFIG$timezone)
   )
 
 #' Nearest-neighbour match of wearable beats to reference beats within one
-#' subject, using findInterval on the (already sorted) reference timestamps -
-#' O(n log n) rather than an O(n*m) pairwise comparison.
+#' subject, using findInterval on the (already sorted) reference timestamps.
+#' Returns the nearest reference beat regardless of distance; callers filter
+#' on gap_s themselves using CONFIG$matching_max_gap_s (see the note next to
+#' that config value). Note on findInterval's cost: it does a binary search
+#' per query against the sorted reference vector by default, so this scales
+#' well, but the exact cost depends on input characteristics (e.g. how
+#' sorted/interleaved the two series already are) - not stated as a strict
+#' asymptotic guarantee here, since that would depend on implementation
+#' details this function doesn't control or verify.
 match_nearest <- function(wearable_ts, reference_ts) {
   w <- as.numeric(wearable_ts)
   r <- as.numeric(reference_ts)
@@ -69,19 +77,19 @@ per_beat_errors <- beats_matched %>%
     matched <- match_nearest(wear_sub$timestamp_local_parsed, ref_sub$timestamp_local_parsed)
     wear_sub %>%
       mutate(
-        reference_ibi_ms = ref_sub$ibi_ms[matched$reference_idx],
+        reference_ppi_ms = ref_sub$ppi_ms[matched$reference_idx],
         match_gap_s = matched$gap_s
       ) %>%
       filter(match_gap_s <= CONFIG$matching_max_gap_s) %>%
       mutate(
-        signed_error_ms = ibi_ms - reference_ibi_ms,
+        signed_error_ms = ppi_ms - reference_ppi_ms,
         abs_error_ms = abs(signed_error_ms)
       )
   })
 
 write_csv(
   per_beat_errors %>% select(subject_id, recording_date, phase_name, signed_error_ms, abs_error_ms),
-  here::here("output", "tables", "ibi_per_beat_errors.csv")
+  here::here("output", "tables", "ppi_per_beat_errors.csv")
 )
 
 #' Bland-Altman bias, SD of differences, 95% limits of agreement, MAE, and
@@ -120,9 +128,9 @@ by_phase_summary <- by_phase %>%
 overall <- summarise_accuracy(per_beat_errors) %>%
   mutate(across(where(is.numeric), ~ round(.x, 1)))
 
-write_csv(by_phase, here::here("output", "tables", "ibi_accuracy_by_recording_and_phase.csv"))
-write_csv(by_phase_summary, here::here("output", "tables", "ibi_accuracy_by_phase.csv"))
-write_csv(overall, here::here("output", "tables", "ibi_accuracy_overall.csv"))
+write_csv(by_phase, here::here("output", "tables", "ppi_accuracy_by_recording_and_phase.csv"))
+write_csv(by_phase_summary, here::here("output", "tables", "ppi_accuracy_by_phase.csv"))
+write_csv(overall, here::here("output", "tables", "ppi_accuracy_overall.csv"))
 
 cat("=== Overall Bland-Altman (all matched beats, all phases) ===\n")
 print(overall)

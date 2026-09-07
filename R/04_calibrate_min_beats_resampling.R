@@ -28,7 +28,7 @@ source(here::here("R", "00_config.R"))
 set.seed(CONFIG$seed)
 
 per_beat_errors <- read_csv(
-  here::here("output", "tables", "ibi_per_beat_errors.csv"), show_col_types = FALSE
+  here::here("output", "tables", "ppi_per_beat_errors.csv"), show_col_types = FALSE
 )
 
 tol <- CONFIG$resampling$tolerance_ms

@@ -1,8 +1,8 @@
 ## =============================================================================
-## Config: Wearable Heart-Rate Validation Pipeline (Portfolio Demo)
+## Config: Wearable Pulse-Rate Validation Pipeline (Portfolio Demo)
 ## =============================================================================
 #' This is a self-contained, anonymized demonstration of an inter-beat-
-#' interval (IBI) accuracy validation pipeline for a wrist-worn heart-rate
+#' interval (PPI) accuracy validation pipeline for a wrist-worn Pulse-rate
 #' sensor against a reference sensor, distilled from a real applied-research
 #' project. ALL DATA HERE IS SYNTHETIC - no real subjects, dates, or
 #' measurements are included anywhere in this repository.
@@ -34,13 +34,13 @@ CONFIG <- list(
   phase_duration_seconds = c(300, 240, 240, 240, 180),
   ## Rough between-phase gap while the experimenter resets the task.
   inter_phase_gap_seconds = c(20, 30, 25, 20),
-  mean_ibi_ms = c(
+  mean_ppi_ms = c(
     Baseline_Rest = 750, Cognitive_Task = 700, Stressor_1 = 620,
     Stressor_2 = 600, Novel_Stimulus = 640
   ),
-  ibi_within_phase_sd_ms = 45,
+  ppi_within_phase_sd_ms = 45,
   ## Wearable measurement error model: a systematic negative bias (wearable
-  ## under-reads IBI slightly, i.e. over-reads heart rate) plus noise, and a
+  ## under-reads ppi slightly, i.e. over-reads Pulse rate) plus noise, and a
   ## small dropout rate (missed beats -> gaps that a real pipeline would
   ## either exclude ["observed_only"] or bridge ["including_interpolated"]).
   wearable_bias_ms = -6,
@@ -49,7 +49,7 @@ CONFIG <- list(
   reference_noise_sd_ms = 6,
   ## Max allowed time gap (seconds) between a wearable beat and its matched
   ## reference beat in step 03. Because the generator builds each series by
-  ## cumulatively summing per-beat IBI, a constant per-beat bias compounds
+  ## cumulatively summing per-beat ppi, a constant per-beat bias compounds
   ## into a growing but bounded timestamp offset over a phase
   matching_max_gap_s = 6,
   

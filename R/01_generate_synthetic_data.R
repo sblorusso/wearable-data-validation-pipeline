@@ -1,6 +1,6 @@
-## =============================================================================
+## ******************************************************************************
 ## Step 1: Generate synthetic per-beat data for a wearable + reference sensor
-## =============================================================================
+## ******************************************************************************
 #' Produces two independent per-beat time series (reference "ground truth"
 #' sensor and a wearable with realistic measurement error: bias, noise,
 #' dropout) plus a task-phase schedule, for a set of synthetic subjects whose
@@ -78,40 +78,40 @@ simulate_one_subject <- function(subject_id, recording_date) {
     )
 
     ## --- Reference sensor: "ground truth" beats for this phase ------------
-    mean_ibi <- CONFIG$mean_ibi_ms[[phase_name]]
+    mean_ppi <- CONFIG$mean_ppi_ms[[phase_name]]
     ## Generate slightly more beats than fit in the window, then trim -
     ## simpler than solving for exact beat count up front.
-    n_beats_guess <- ceiling(duration_s * 1000 / mean_ibi) + 20
-    ref_ibi_ms <- pmax(
-      300, rnorm(n_beats_guess, mean = mean_ibi, sd = CONFIG$ibi_within_phase_sd_ms)
+    n_beats_guess <- ceiling(duration_s * 1000 / mean_ppi) + 20
+    ref_ppi_ms <- pmax(
+      300, rnorm(n_beats_guess, mean = mean_ppi, sd = CONFIG$ppi_within_phase_sd_ms)
     )
-    ref_elapsed_s <- cumsum(ref_ibi_ms) / 1000
+    ref_elapsed_s <- cumsum(ref_ppi_ms) / 1000
     ref_elapsed_s <- ref_elapsed_s[ref_elapsed_s <= duration_s]
     ref_timestamps <- phase_start_time + ref_elapsed_s
-
+    
     reference_rows[[p]] <- tibble(
       subject_id = subject_id,
       recording_date = as.character(recording_date),
       timestamp_local = format_naive(ref_timestamps),
-      ibi_ms = ref_ibi_ms[seq_along(ref_elapsed_s)]
+      ppi_ms = ref_ppi_ms[seq_along(ref_elapsed_s)]
     )
-
+    
     ## --- Wearable: independent noisy series + dropout ----------------------
-    wear_ibi_ms <- pmax(
+    wear_ppi_ms <- pmax(
       300,
-      ref_ibi_ms[seq_along(ref_elapsed_s)] +
+      ref_ppi_ms[seq_along(ref_elapsed_s)] +
         rnorm(length(ref_elapsed_s), mean = CONFIG$wearable_bias_ms, sd = CONFIG$wearable_noise_sd_ms)
     )
-    wear_elapsed_s <- cumsum(wear_ibi_ms) / 1000
+    wear_elapsed_s <- cumsum(wear_ppi_ms) / 1000
     keep <- wear_elapsed_s <= duration_s &
       runif(length(wear_elapsed_s)) > CONFIG$wearable_dropout_rate
     wear_timestamps <- phase_start_time + wear_elapsed_s[keep]
-
+    
     wearable_rows[[p]] <- tibble(
       subject_id = subject_id,
       recording_date = as.character(recording_date),
       timestamp_local = format_naive(wear_timestamps),
-      ibi_ms = wear_ibi_ms[keep]
+      ppi_ms = wear_ppi_ms[keep]
     )
 
     ## Advance cursor past this phase plus a short inter-phase gap.

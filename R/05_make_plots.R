@@ -2,7 +2,7 @@
 ## Step 5: Plots - Bland-Altman diagram and resampling calibration curve
 ## =============================================================================
 #' Produces the two figures that best summarise this demo:
-#'   1. A classic Bland-Altman plot (mean IBI vs. wearable-reference
+#'   1. A classic Bland-Altman plot (mean PPI vs. wearable-reference
 #'      difference), coloured by task phase, with bias + 95% limits of
 #'      agreement.
 #'   2. The resampling calibration curve from step 04: empirical SE(bias) as
@@ -21,9 +21,9 @@ library(ggplot2)
 source(here::here("R", "00_config.R"))
 
 per_beat_errors <- read_csv(
-  here::here("output", "tables", "ibi_per_beat_errors.csv"), show_col_types = FALSE
+  here::here("output", "tables", "ppi_per_beat_errors.csv"), show_col_types = FALSE
 )
-overall <- read_csv(here::here("output", "tables", "ibi_accuracy_overall.csv"), show_col_types = FALSE)
+overall <- read_csv(here::here("output", "tables", "ppi_accuracy_overall.csv"), show_col_types = FALSE)
 calibration <- read_csv(
   here::here("output", "tables", "min_beats_resampling_calibration_detail.csv"),
   show_col_types = FALSE
@@ -33,7 +33,7 @@ calibration <- read_csv(
 ## The per-beat error file only stores the wearable-reference difference, not
 ## the pair mean - so this uses the classic Bland-Altman y-axis (the
 ## difference) against phase on the x-axis, which keeps the plot
-## self-contained without re-reading raw IBI values from two more files.
+## self-contained without re-reading raw PPI values from two more files.
 per_beat_errors <- per_beat_errors %>%
   mutate(phase_name = factor(phase_name, levels = CONFIG$phases))
 
@@ -45,12 +45,12 @@ p_bland_altman <- ggplot(per_beat_errors, aes(x = phase_name, y = signed_error_m
     linetype = "dashed", colour = "grey35", linewidth = 0.5
   ) +
   labs(
-    title = "Bland-Altman: wearable minus reference IBI, by task phase",
+    title = "Bland-Altman: wearable minus reference PPI, by task phase",
     subtitle = paste0(
       "Overall bias = ", overall$bias_ms, " ms (solid line); ",
       "95% limits of agreement = [", overall$loa_lower_ms, ", ", overall$loa_upper_ms, "] ms (dashed)"
     ),
-    x = NULL, y = "Wearable - reference IBI (ms)"
+    x = NULL, y = "Wearable - reference PPI (ms)"
   ) +
   theme_minimal(base_size = 11) +
   theme(axis.text.x = element_text(angle = 20, hjust = 1))

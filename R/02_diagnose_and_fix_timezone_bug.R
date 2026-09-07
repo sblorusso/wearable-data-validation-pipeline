@@ -1,6 +1,6 @@
-## =============================================================================
+## ******************************************************************************
 ## Step 2: Diagnose and fix a timezone-parsing bug (worked example)
-## =============================================================================
+## ******************************************************************************
 #' Background: in the original project, wearable beats matched almost no
 #' scheduled task windows after a pipeline refactor - "event_name" came back
 #' empty for the great majority of recordings. The root cause turned out to
@@ -46,7 +46,7 @@ schedule <- read_csv(here::here("data", "raw", "schedule.csv"), col_types = naiv
 
 wearable_files <- list.files(here::here("data", "raw", "wearable"), full.names = TRUE)
 wearable_raw <- map_dfr(wearable_files, read_csv, col_types = naive_char_cols) %>%
-  mutate(ibi_ms = as.numeric(ibi_ms))
+  mutate(ppi_ms = as.numeric(ppi_ms))
 
 ## --- 2a. Reproduce the bug: naive parse defaults to UTC ---------------------
 ## This mirrors readr::read_csv()'s default behaviour for a timezone-naive
@@ -179,7 +179,7 @@ beats_matched <- wearable_fixed %>%
     timestamp_local_parsed <= scheduled_end
   ) %>%
   distinct(row_id, .keep_all = TRUE) %>%
-  select(subject_id, recording_date, phase_name, timestamp_local_parsed, ibi_ms)
+  select(subject_id, recording_date, phase_name, timestamp_local_parsed, ppi_ms)
 
 write_csv(beats_matched, here::here("data", "processed", "beats_matched.csv"))
 cat("\nWritten: data/processed/beats_matched.csv (", nrow(beats_matched), " rows)\n", sep = "")
